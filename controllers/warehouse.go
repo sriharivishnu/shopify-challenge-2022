@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	models "github.com/sriharivishnu/shopify-challenge/models/api"
 	"github.com/sriharivishnu/shopify-challenge/services"
 	"github.com/sriharivishnu/shopify-challenge/utils"
 )
@@ -13,19 +14,8 @@ type WarehouseController struct {
 	WarehouseService services.WarehouseLayer
 }
 
-type CreateWarehousePayload struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Lon         float32 `json:"lon"`
-	Lat         float32 `json:"lat"`
-}
-
-type AddItemPayload struct {
-	ItemID uint `json:"item_id"`
-}
-
 func (w *WarehouseController) Create(c *gin.Context) {
-	createWarehousePayload := CreateWarehousePayload{}
+	createWarehousePayload := models.CreateWarehousePayload{}
 
 	if err := c.BindJSON(&createWarehousePayload); err != nil {
 		utils.RespondError(c, err, http.StatusBadRequest)
@@ -33,13 +23,10 @@ func (w *WarehouseController) Create(c *gin.Context) {
 	}
 
 	warehouse, err := w.WarehouseService.CreateWarehouse(
-		createWarehousePayload.Name,
-		createWarehousePayload.Description,
-		createWarehousePayload.Lon,
-		createWarehousePayload.Lat,
+		createWarehousePayload,
 	)
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 
@@ -49,7 +36,7 @@ func (w *WarehouseController) Create(c *gin.Context) {
 func (w *WarehouseController) GetAll(c *gin.Context) {
 	warehouses, err := w.WarehouseService.GetAllWarehouses()
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 
@@ -65,7 +52,7 @@ func (w *WarehouseController) Get(c *gin.Context) {
 
 	warehouse, err := w.WarehouseService.GetWarehouseById(uint(warehouseID))
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 
@@ -79,7 +66,7 @@ func (w *WarehouseController) AddItemToWarehouse(c *gin.Context) {
 		return
 	}
 
-	addItemPayload := AddItemPayload{}
+	addItemPayload := models.AddItemPayload{}
 	if err := c.BindJSON(&addItemPayload); err != nil {
 		utils.RespondError(c, err, http.StatusBadRequest)
 		return
@@ -87,7 +74,7 @@ func (w *WarehouseController) AddItemToWarehouse(c *gin.Context) {
 
 	item, err := w.WarehouseService.AddItemToWarehouse(uint(warehouseID), uint(addItemPayload.ItemID))
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 

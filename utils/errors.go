@@ -7,12 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
 )
 
 func RespondSQLError(c *gin.Context, err error) {
 	log.Printf("\x1b[31;1m%s\x1b[0m\n", err)
 
-	if err == sql.ErrNoRows {
+	if err == sql.ErrNoRows || err == gorm.ErrRecordNotFound {
 		RespondErrorString(c, "Resource not found!", http.StatusNotFound)
 		return
 	}

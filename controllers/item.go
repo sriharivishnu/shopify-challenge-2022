@@ -1,11 +1,12 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sriharivishnu/shopify-challenge/external"
+	models "github.com/sriharivishnu/shopify-challenge/models/api"
 	"github.com/sriharivishnu/shopify-challenge/services"
 	"github.com/sriharivishnu/shopify-challenge/utils"
 )
@@ -14,44 +15,21 @@ import (
 type ItemController struct {
 	ItemService    services.ItemLayer
 	WeatherService services.WeatherLayer
-	StorageService external.Storage
-}
-
-type CreateItemPayload struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float32 `json:"price"`
-	Count       int     `json:"count"`
-	City        string  `json:"city"`
-}
-
-type UpdateItemPayload struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float32 `json:"price"`
-	Count       int     `json:"count"`
-	City        string  `json:"city"`
 }
 
 // FUNCTIONS
 func (i *ItemController) CreateItem(c *gin.Context) {
-	createItemPayload := CreateItemPayload{}
+	createItemPayload := models.CreateItemPayload{}
 
 	if err := c.BindJSON(&createItemPayload); err != nil {
 		utils.RespondError(c, err, http.StatusBadRequest)
 		return
 	}
 
-	item, err := i.ItemService.CreateItem(
-		createItemPayload.Name,
-		createItemPayload.City,
-		createItemPayload.Description,
-		createItemPayload.Count,
-		createItemPayload.Price,
-	)
+	item, err := i.ItemService.CreateItem(createItemPayload)
 
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 
@@ -64,27 +42,24 @@ func (i *ItemController) UpdateItem(c *gin.Context) {
 	var itemId int
 
 	if itemId, err = strconv.Atoi(itemIdRaw); err != nil || itemId <= 0 {
-		utils.RespondError(c, nil, http.StatusBadRequest)
+		if err != nil {
+			utils.RespondError(c, err, http.StatusBadRequest)
+		} else {
+			utils.RespondError(c, errors.New("Invalid Item ID"), http.StatusBadRequest)
+		}
 		return
 	}
 
-	updateItemPayload := UpdateItemPayload{}
+	updateItemPayload := models.UpdateItemPayload{}
 	if err := c.BindJSON(&updateItemPayload); err != nil {
 		utils.RespondError(c, err, http.StatusBadRequest)
 		return
 	}
 
-	item, err := i.ItemService.UpdateItem(
-		uint(itemId),
-		updateItemPayload.Name,
-		updateItemPayload.City,
-		updateItemPayload.Description,
-		updateItemPayload.Count,
-		updateItemPayload.Price,
-	)
+	item, err := i.ItemService.UpdateItem(uint(itemId), updateItemPayload)
 
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 
@@ -102,7 +77,7 @@ func (i *ItemController) GetItem(c *gin.Context) {
 	}
 	item, err := i.ItemService.GetItemById(uint(itemId))
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 	c.JSON(200, gin.H{"item": item})
@@ -111,11 +86,11 @@ func (i *ItemController) GetItem(c *gin.Context) {
 func (i *ItemController) GetItems(c *gin.Context) {
 	items, err := i.ItemService.GetItems()
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 	for idx := range items {
-		weather, err := i.WeatherService.FetchWeather(items[idx].City, 80.5204, 43.4643)
+		weather, err := i.WeatherService.FetchWeather(items[idx].City)
 		if err == nil {
 			items[idx].WeatherDescription = weather.Weather[0].Description
 		} else {
@@ -137,7 +112,7 @@ func (i *ItemController) DeleteItem(c *gin.Context) {
 
 	err = i.ItemService.DeleteItem(uint(itemId))
 	if err != nil {
-		utils.RespondError(c, err, http.StatusInternalServerError)
+		utils.RespondSQLError(c, err)
 		return
 	}
 	c.JSON(200, gin.H{"message": "Item deleted successfully"})

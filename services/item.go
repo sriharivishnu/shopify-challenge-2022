@@ -4,67 +4,74 @@ import (
 	"errors"
 
 	db "github.com/sriharivishnu/shopify-challenge/external"
-	models "github.com/sriharivishnu/shopify-challenge/models/db"
+	apiModels "github.com/sriharivishnu/shopify-challenge/models/api"
+	dbModels "github.com/sriharivishnu/shopify-challenge/models/db"
 )
 
 type ItemLayer interface {
-	CreateItem(name, city, description string, count int, price float32) (models.Item, error)
-	UpdateItem(itemId uint, name, city, description string, count int, price float32) (models.Item, error)
-	GetItemById(itemId uint) (models.Item, error)
-	GetItems() ([]models.Item, error)
+	CreateItem(payload apiModels.CreateItemPayload) (dbModels.Item, error)
+	UpdateItem(itemId uint, payload apiModels.UpdateItemPayload) (dbModels.Item, error)
+	GetItemById(itemId uint) (dbModels.Item, error)
+	GetItems() ([]dbModels.Item, error)
 	DeleteItem(itemId uint) error
 }
 
 type ItemService struct{}
 
 // could add a cache to improve performance by avoiding database, but kept it simple for now
-func (service *ItemService) CreateItem(name, city, description string, count int, price float32) (models.Item, error) {
-	item := models.Item{Name: name, City: city, Description: description, Count: count, Price: price}
+func (service *ItemService) CreateItem(payload apiModels.CreateItemPayload) (dbModels.Item, error) {
+	item := dbModels.Item{
+		Name:        payload.Name,
+		City:        payload.Name,
+		Description: payload.Description,
+		Quantity:    payload.Quantity,
+		Price:       payload.Price,
+	}
 	if res := db.DbConn.Create(&item); res.Error != nil {
-		return models.Item{}, res.Error
+		return dbModels.Item{}, res.Error
 	}
 	return item, nil
 }
 
-func (service *ItemService) UpdateItem(itemId uint, city, name, description string, count int, price float32) (models.Item, error) {
-	item := models.Item{}
+func (service *ItemService) UpdateItem(itemId uint, payload apiModels.UpdateItemPayload) (dbModels.Item, error) {
+	item := dbModels.Item{}
 	item.ID = itemId
 	res := db.DbConn.Model(&item).Updates(
-		models.Item{
-			Name:        name,
-			Description: description,
-			Price:       price,
-			Count:       count,
-			City:        city,
+		dbModels.Item{
+			Name:        payload.Name,
+			Description: payload.Description,
+			Price:       payload.Price,
+			Quantity:    payload.Quantity,
+			City:        payload.City,
 		},
 	)
 	if res.Error != nil {
-		return models.Item{}, res.Error
+		return dbModels.Item{}, res.Error
 	}
 	if res.RowsAffected == 0 {
-		return models.Item{}, errors.New("No item found")
+		return dbModels.Item{}, errors.New("No item found")
 	}
 	return item, nil
 }
 
-func (service *ItemService) GetItemById(itemId uint) (models.Item, error) {
-	item := models.Item{}
+func (service *ItemService) GetItemById(itemId uint) (dbModels.Item, error) {
+	item := dbModels.Item{}
 	if res := db.DbConn.First(&item, itemId); res.Error != nil {
-		return models.Item{}, res.Error
+		return dbModels.Item{}, res.Error
 	}
 	return item, nil
 }
 
-func (service *ItemService) GetItems() ([]models.Item, error) {
-	items := []models.Item{}
+func (service *ItemService) GetItems() ([]dbModels.Item, error) {
+	items := []dbModels.Item{}
 	if res := db.DbConn.Find(&items); res.Error != nil {
-		return []models.Item{}, res.Error
+		return []dbModels.Item{}, res.Error
 	}
 	return items, nil
 }
 
 func (service *ItemService) DeleteItem(itemId uint) error {
-	res := db.DbConn.Delete(&models.Item{}, itemId)
+	res := db.DbConn.Delete(&dbModels.Item{}, itemId)
 	if res.Error != nil {
 		return res.Error
 	}

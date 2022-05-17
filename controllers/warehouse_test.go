@@ -1,165 +1,238 @@
 package controllers
 
-// import (
-// 	"encoding/json"
-// 	"errors"
-// 	"io/ioutil"
-// 	"log"
-// 	"net/http/httptest"
-// 	"testing"
+import (
+	"errors"
+	"io/ioutil"
+	"log"
+	"net/http/httptest"
+	"testing"
 
-// 	"github.com/gin-gonic/gin"
-// 	"github.com/go-sql-driver/mysql"
-// 	utils "github.com/sriharivishnu/shopify-challenge/mocks/helpers"
-// 	mocks "github.com/sriharivishnu/shopify-challenge/mocks/services"
-// 	"github.com/sriharivishnu/shopify-challenge/models"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/gin-gonic/gin"
+	"github.com/sriharivishnu/shopify-challenge/mocks"
+	utils "github.com/sriharivishnu/shopify-challenge/mocks/helpers"
+	models "github.com/sriharivishnu/shopify-challenge/models/api"
+	dbModels "github.com/sriharivishnu/shopify-challenge/models/db"
+	"github.com/stretchr/testify/assert"
+)
 
-// func TestRepositoryCreateSuccess(t *testing.T) {
-// 	log.SetOutput(ioutil.Discard)
-// 	gin.SetMode(gin.TestMode)
-// 	params := []gin.Param{
-// 		{
-// 			Key:   "username",
-// 			Value: "username",
-// 		},
-// 	}
-// 	dummyRepo := models.Repository{Id: "456", OwnerId: "user_id", Name: "repoName", Description: "sample description"}
+func TestWarehouseCreate(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+	gin.SetMode(gin.TestMode)
+	dummyWarehouse := dbModels.Warehouse{
+		Name:        "warehouseName",
+		Description: "sample description",
+		Longitude:   1.1321,
+		Latitude:    1.4567,
+	}
+	t.Run("WarehouseCreateSuccess", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
 
-// 	dummyUser := models.User{Id: "user_id", Username: "username"}
+		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "lon": 1.1321, "lat": 1.4567})
 
-// 	t.Run("RepositoryCreateSuccess", func(t *testing.T) {
-// 		w := httptest.NewRecorder()
-// 		ctx, _ := gin.CreateTestContext(w)
-// 		ctx.Params = params
-// 		ctx.Set("user", dummyUser)
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("CreateWarehouse", models.CreateWarehousePayload{
+			Name:        "warehouseName",
+			Description: "sample description",
+			Lon:         1.1321,
+			Lat:         1.4567,
+		}).Return(dummyWarehouse, nil)
 
-// 		utils.MockJsonPost(ctx, gin.H{"name": "repoName", "description": "sample description"})
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
 
-// 		mockRepoService := mocks.RepositoryLayer{}
-// 		mockRepoService.On("Create", dummyRepo.Name, dummyRepo.Description, dummyRepo.OwnerId).Return(dummyRepo, nil)
+		warehouseController.Create(ctx)
 
-// 		repoController := RepositoryController{
-// 			RepositoryService: &mockRepoService,
-// 		}
+		assert.Equal(t, 200, w.Code)
+		expected := `{"message":"Warehouse created successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}}`
+		assert.Equal(t, expected, w.Body.String())
+	})
 
-// 		repoController.Create(ctx)
+	t.Run("WarehouseCreateFail", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
 
-// 		assert.Equal(t, 200, w.Code)
-// 		expected, _ := json.Marshal(gin.H{"message": "Created repository username/repoName successfully", "id": "456"})
-// 		assert.Equal(t, expected, w.Body.Bytes())
-// 	})
+		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "lon": 1.1321, "lat": 1.4567})
 
-// }
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("CreateWarehouse", models.CreateWarehousePayload{
+			Name:        "warehouseName",
+			Description: "sample description",
+			Lon:         1.1321,
+			Lat:         1.4567,
+		}).Return(dbModels.Warehouse{}, errors.New("error"))
 
-// func TestRepositoryCreateError(t *testing.T) {
-// 	testcases := []struct {
-// 		testName    string
-// 		repoName    string
-// 		description string
-// 		response    string
-// 		createError error
-// 		code        int
-// 	}{
-// 		{
-// 			"EmptyRepoName", "", "test", "Repository name must not be empty", nil, 400,
-// 		},
-// 		{
-// 			"InvalidRepoName", "/\\", "test", "Repository name contains invalid characters. Please only use letters, numbers, and/or -,_", nil, 400,
-// 		},
-// 		{
-// 			"RepoCreateError", "test123", "desc", "Test SQL error", errors.New("Test SQL error"), 500,
-// 		},
-// 		{
-// 			"RepoDuplicateCreate", "test123", "desc", "This Resource Already Exists!", &mysql.MySQLError{Number: 1062}, 409,
-// 		},
-// 	}
-// 	log.SetOutput(ioutil.Discard)
-// 	gin.SetMode(gin.TestMode)
-// 	params := []gin.Param{
-// 		{
-// 			Key:   "username",
-// 			Value: "username",
-// 		},
-// 	}
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
 
-// 	dummyUser := models.User{Id: "user_id", Username: "username"}
+		warehouseController.Create(ctx)
 
-// 	for _, test := range testcases {
-// 		t.Run(test.testName, func(t *testing.T) {
-// 			w := httptest.NewRecorder()
-// 			ctx, _ := gin.CreateTestContext(w)
-// 			ctx.Params = params
-// 			ctx.Set("user", dummyUser)
+		assert.Equal(t, 500, w.Code)
+		expected := `{"error":"error"}`
+		assert.Equal(t, expected, w.Body.String())
+	})
+}
 
-// 			utils.MockJsonPost(ctx, gin.H{"name": test.repoName, "description": test.description})
+func TestWarehouseGet(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+	gin.SetMode(gin.TestMode)
+	gin.SetMode(gin.TestMode)
+	params := []gin.Param{
+		{
+			Key:   "warehouse_id",
+			Value: "1",
+		},
+	}
 
-// 			mockRepoService := mocks.RepositoryLayer{}
-// 			mockRepoService.On("Create", test.repoName, test.description, dummyUser.Id).Return(models.Repository{Id: "test"}, test.createError)
+	dummyWarehouse := dbModels.Warehouse{
+		Name:        "warehouseName",
+		Description: "sample description",
+		Longitude:   1.1321,
+		Latitude:    1.4567,
+	}
+	t.Run("WarehouseGetSuccess", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Params = params
 
-// 			repoController := RepositoryController{
-// 				RepositoryService: &mockRepoService,
-// 			}
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("GetWarehouseById", uint(1)).Return(dummyWarehouse, nil)
 
-// 			repoController.Create(ctx)
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
 
-// 			assert.Equal(t, test.code, w.Code)
-// 			expected, _ := json.Marshal(gin.H{"error": test.response})
-// 			assert.Equal(t, expected, w.Body.Bytes())
-// 		})
-// 	}
+		warehouseController.Get(ctx)
 
-// }
+		assert.Equal(t, 200, w.Code)
+		expected := `{"message":"Warehouse fetched successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}}`
+		assert.Equal(t, expected, w.Body.String())
+	})
 
-// func TestRepositoryGetForUser(t *testing.T) {
-// 	dummyRepositories := []models.Repository{
-// 		{
-// 			Id:          "123",
-// 			OwnerId:     "456",
-// 			Name:        "foo",
-// 			Description: "test description",
-// 		},
-// 		{
-// 			Id:          "789",
-// 			OwnerId:     "456",
-// 			Name:        "bar",
-// 			Description: "test description 2",
-// 		},
-// 		{
-// 			Id:          "101",
-// 			OwnerId:     "456",
-// 			Name:        "cool",
-// 			Description: "",
-// 		},
-// 	}
+	t.Run("WarehouseGetFail", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Params = params
 
-// 	log.SetOutput(ioutil.Discard)
-// 	gin.SetMode(gin.TestMode)
-// 	params := []gin.Param{
-// 		{
-// 			Key:   "username",
-// 			Value: "username",
-// 		},
-// 	}
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("GetWarehouseById", uint(1)).Return(dbModels.Warehouse{}, errors.New("error"))
 
-// 	t.Run("GetRepositoriesSuccess", func(t *testing.T) {
-// 		w := httptest.NewRecorder()
-// 		ctx, _ := gin.CreateTestContext(w)
-// 		ctx.Params = params
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
 
-// 		mockRepoService := mocks.RepositoryLayer{}
-// 		mockRepoService.On("GetRepositoriesForUser", "username").Return(dummyRepositories, nil)
+		warehouseController.Get(ctx)
 
-// 		repoController := RepositoryController{
-// 			RepositoryService: &mockRepoService,
-// 		}
+		assert.Equal(t, 500, w.Code)
+		expected := `{"error":"error"}`
+		assert.Equal(t, expected, w.Body.String())
+	})
 
-// 		repoController.GetForUser(ctx)
+}
 
-// 		assert.Equal(t, 200, w.Code)
-// 		expected, _ := json.Marshal(gin.H{"repositories": dummyRepositories})
-// 		assert.Equal(t, expected, w.Body.Bytes())
-// 	})
+func TestGetAllWarehouses(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+	gin.SetMode(gin.TestMode)
+	dummyWarehouses := []dbModels.Warehouse{
+		{
+			Name:        "warehouseName",
+			Description: "sample description",
+			Longitude:   1.1321,
+			Latitude:    1.4567,
+		},
+	}
+	t.Run("GetAllWarehousesSuccess", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
 
-// }
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("GetAllWarehouses").Return(dummyWarehouses, nil)
+
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
+
+		warehouseController.GetAll(ctx)
+
+		assert.Equal(t, 200, w.Code)
+		expected := `{"message":"Warehouses fetched successfully","warehouses":[{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}]}`
+		assert.Equal(t, expected, w.Body.String())
+	})
+
+	t.Run("GetAllWarehousesFail", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("GetAllWarehouses").Return([]dbModels.Warehouse{}, errors.New("error"))
+
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
+
+		warehouseController.GetAll(ctx)
+		assert.Equal(t, 500, w.Code)
+		expected := `{"error":"error"}`
+		assert.Equal(t, expected, w.Body.String())
+	})
+}
+
+func TestAddItemToWarehouse(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+	gin.SetMode(gin.TestMode)
+	params := []gin.Param{
+		{
+			Key:   "warehouse_id",
+			Value: "1",
+		},
+	}
+	warehouseId := uint(1)
+	dummyItem := dbModels.Item{
+		WarehouseID: &warehouseId,
+	}
+	dummyItem.ID = 1
+
+	t.Run("AddItemToWarehouseSuccess", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Params = params
+
+		utils.MockJsonPost(ctx, gin.H{"item_id": 1})
+
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("AddItemToWarehouse", uint(1), uint(1)).Return(dummyItem, nil)
+
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
+
+		warehouseController.AddItemToWarehouse(ctx)
+
+		assert.Equal(t, 200, w.Code)
+		expected := `{"item":{"ID":1,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"","description":"","price":0,"quantity":0,"city":"","warehouse_id":1,"weather_description":""},"message":"Item added to warehouse successfully"}`
+		assert.Equal(t, expected, w.Body.String())
+	})
+
+	t.Run("AddItemToWarehouseFail", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Params = params
+
+		utils.MockJsonPost(ctx, gin.H{"item_id": 1})
+
+		mockWarehouseService := mocks.WarehouseLayer{}
+		mockWarehouseService.On("AddItemToWarehouse", uint(1), uint(1)).Return(dbModels.Item{}, errors.New("error"))
+
+		warehouseController := WarehouseController{
+			WarehouseService: &mockWarehouseService,
+		}
+
+		warehouseController.AddItemToWarehouse(ctx)
+
+		assert.Equal(t, 500, w.Code)
+		expected := `{"error":"error"}`
+		assert.Equal(t, expected, w.Body.String())
+	})
+}

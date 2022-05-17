@@ -11,7 +11,7 @@ import (
 )
 
 type WeatherLayer interface {
-	FetchWeather(city string, lon, lat float32) (models.WeatherResponse, error)
+	FetchWeather(city string) (models.WeatherResponse, error)
 }
 
 type WeatherService struct {
@@ -19,13 +19,32 @@ type WeatherService struct {
 	HttpClient *http.Client
 }
 
+type CityMap map[string]struct {
+	lon float32
+	lat float32
+}
+
+func (service *WeatherService) GetLonLat(city string) (float32, float32) {
+	mapping := CityMap{
+		"Toronto":   {lon: -79.38, lat: 43.65},
+		"Montreal":  {lon: -73.57, lat: 45.50},
+		"Vancouver": {lon: -123.12, lat: 49.28},
+		"Calgary":   {lon: -114.05, lat: 51.05},
+		"Waterloo":  {lon: -80.47, lat: 43.47},
+	}
+
+	return mapping[city].lon, mapping[city].lat
+}
+
 // Also caches the requests for a given city. In production, common cities could be pre-fetched
 // to avoid latency in the future.
-func (service *WeatherService) FetchWeather(city string, lon, lat float32) (models.WeatherResponse, error) {
+func (service *WeatherService) FetchWeather(city string) (models.WeatherResponse, error) {
 	if weather := service.Cache.Get(city); weather != nil {
 		return weather.(models.WeatherResponse), nil
 	}
 	appId := "dfc4083c5474f48352a4dfc1b72c771f"
+
+	lon, lat := service.GetLonLat(city)
 
 	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%.6f&lon=%.6f&appid=%s", lat, lon, appId)
 
@@ -47,8 +66,6 @@ func (service *WeatherService) FetchWeather(city string, lon, lat float32) (mode
 	if readErr != nil {
 		return models.WeatherResponse{}, readErr
 	}
-
-	fmt.Println(string(body))
 
 	weather := models.WeatherResponse{}
 	jsonErr := json.Unmarshal(body, &weather)

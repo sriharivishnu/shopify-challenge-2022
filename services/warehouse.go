@@ -2,56 +2,62 @@ package services
 
 import (
 	db "github.com/sriharivishnu/shopify-challenge/external"
-	models "github.com/sriharivishnu/shopify-challenge/models/db"
+	apiModels "github.com/sriharivishnu/shopify-challenge/models/api"
+	dbModels "github.com/sriharivishnu/shopify-challenge/models/db"
 )
 
 type WarehouseLayer interface {
-	CreateWarehouse(name, description string, lon, lat float32) (models.Warehouse, error)
-	GetWarehouseById(warehouseId uint) (models.Warehouse, error)
-	GetAllWarehouses() ([]models.Warehouse, error)
-	AddItemToWarehouse(warehouseId uint, itemId uint) (models.Item, error)
+	CreateWarehouse(payload apiModels.CreateWarehousePayload) (dbModels.Warehouse, error)
+	GetWarehouseById(warehouseId uint) (dbModels.Warehouse, error)
+	GetAllWarehouses() ([]dbModels.Warehouse, error)
+	AddItemToWarehouse(warehouseId uint, itemId uint) (dbModels.Item, error)
 }
 
 type WarehouseService struct{}
 
-func (service *WarehouseService) CreateWarehouse(name, description string, lon, lat float32) (models.Warehouse, error) {
-	warehouse := models.Warehouse{Name: name, Description: description, Longitude: lon, Latitude: lat}
+func (service *WarehouseService) CreateWarehouse(payload apiModels.CreateWarehousePayload) (dbModels.Warehouse, error) {
+	warehouse := dbModels.Warehouse{
+		Name:        payload.Name,
+		Description: payload.Description,
+		Longitude:   payload.Lon,
+		Latitude:    payload.Lat,
+	}
 	if res := db.DbConn.Create(&warehouse); res.Error != nil {
-		return models.Warehouse{}, res.Error
+		return dbModels.Warehouse{}, res.Error
 	}
 	return warehouse, nil
 }
 
-func (service *WarehouseService) GetWarehouseById(warehouseId uint) (models.Warehouse, error) {
-	warehouse := models.Warehouse{}
+func (service *WarehouseService) GetWarehouseById(warehouseId uint) (dbModels.Warehouse, error) {
+	warehouse := dbModels.Warehouse{}
 	if res := db.DbConn.First(&warehouse, warehouseId); res.Error != nil {
-		return models.Warehouse{}, res.Error
+		return dbModels.Warehouse{}, res.Error
 	}
 	db.DbConn.Model(&warehouse).Association("Items").Find(&warehouse.Items)
 
 	return warehouse, nil
 }
 
-func (service *WarehouseService) GetAllWarehouses() ([]models.Warehouse, error) {
-	warehouses := []models.Warehouse{}
+func (service *WarehouseService) GetAllWarehouses() ([]dbModels.Warehouse, error) {
+	warehouses := []dbModels.Warehouse{}
 	if res := db.DbConn.Find(&warehouses); res.Error != nil {
-		return []models.Warehouse{}, res.Error
+		return []dbModels.Warehouse{}, res.Error
 	}
 	return warehouses, nil
 }
 
-func (service *WarehouseService) AddItemToWarehouse(warehouseId uint, itemId uint) (models.Item, error) {
-	warehouse := models.Warehouse{}
+func (service *WarehouseService) AddItemToWarehouse(warehouseId uint, itemId uint) (dbModels.Item, error) {
+	warehouse := dbModels.Warehouse{}
 	if res := db.DbConn.First(&warehouse, warehouseId); res.Error != nil {
-		return models.Item{}, res.Error
+		return dbModels.Item{}, res.Error
 	}
-	item := models.Item{}
+	item := dbModels.Item{}
 	if res := db.DbConn.First(&item, itemId); res.Error != nil {
-		return models.Item{}, res.Error
+		return dbModels.Item{}, res.Error
 	}
 	err := db.DbConn.Model(&warehouse).Association("Items").Append(&item)
 	if err != nil {
-		return models.Item{}, err
+		return dbModels.Item{}, err
 	}
 	return item, nil
 }
