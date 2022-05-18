@@ -24,6 +24,8 @@ type CityMap map[string]struct {
 	lat float32
 }
 
+// can implement this function to make another API call (with caching)
+// to support any cities
 func (service *WeatherService) GetLonLat(city string) (float32, float32) {
 	mapping := CityMap{
 		"Toronto":   {lon: -79.38, lat: 43.65},

@@ -22,10 +22,10 @@ type ItemService struct{}
 func (service *ItemService) CreateItem(payload apiModels.CreateItemPayload) (dbModels.Item, error) {
 	item := dbModels.Item{
 		Name:        payload.Name,
-		City:        payload.Name,
 		Description: payload.Description,
-		Quantity:    payload.Quantity,
 		Price:       payload.Price,
+		Quantity:    payload.Quantity,
+		City:        payload.City,
 	}
 	if res := db.DbConn.Create(&item); res.Error != nil {
 		return dbModels.Item{}, res.Error

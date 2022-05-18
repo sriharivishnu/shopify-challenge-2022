@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+
+
+<body>
+    <h1>Srihari Vishnu's 2022 Shopify Challenge</h1>
+    Let's track some inventory! ;)
+    <h3>Actions</h3>
+    <h5>Item Actions</h5>
+    <div style="margin-top: 5px;">
+        <div style="margin-top: 5px">
+            <button id="getAllItems">Get All Items</button>
+        </div>
+        <div style="margin-top: 5px">
+            <button id="getItemByID">Get Item by ID</button> <input id="getItemIDInput" placeholder="ID" />
+        </div>
+        <div style="margin-top: 5px">
+            <button id="createItem">Create Item</button> <input id="createItemName" placeholder="Name" /> <input
+                placeholder="Description" id="createItemDescription" /> <input placeholder="Quantity" type="number"
+                id="createItemQuantity" />
+            <input placeholder="Price" type="number" id="createItemPrice" /> <input placeholder="City"
+                id="createItemCity" />
+        </div>
+        <div style="margin-top: 5px">
+            <button id="updateItem">Update Item</button> <input placeholder="ID" id="updateItemID" /> <input
+                placeholder="Name" id="updateItemName" /> <input placeholder="Quantity" type="number"
+                id="updateItemQuantity" /> <input placeholder="Price" type="number" id="updateItemPrice" />
+        </div>
+        <div style="margin-top: 5px">
+            <button id="deleteItem">Delete Item</button> <input placeholder="ID" id="deleteItemID" />
+        </div>
+    </div>
+    <h5>Warehouse Actions</h5>
+    <div>
+        <div style="margin-top: 5px">
+            <button id="getAllWarehouses">Get All Warehouses</button>
+        </div>
+        <div style="margin-top: 5px">
+            <button id="getWarehouseByID">Get Warehouse by ID</button> <input placeholder="Warehouse ID"
+                id="getWarehouseIDInput" />
+        </div>
+        <div style="margin-top: 5px">
+            <button id="createWarehouse">Create Warehouse</button> <input placeholder="Name" id="createWarehouseName" />
+            <input placeholder="Description" id="createWarehouseDescription" /> <input placeholder="Longitude"
+                type="number" id="createWarehouseLongitude" /> <input placeholder="Latitude" type="number"
+                id="createWarehouseLatitude" />
+        </div>
+        <div style="margin-top: 5px">
+            <button id="addItemToWarehouse">Add Item to Warehouse</button> <input placeholder="Warehouse ID"
+                id="addItemToWarehouseID" /> <input placeholder="Item ID" id="addItemToWarehouseItemID" />
+        </div>
+    </div>
+    <h3>Results</h3>
+    <div id="content-box">
+
+    </div>
+
+    <script>
+
+        function displayTable(arr) {
+            if (arr.length == 0) {
+                document.getElementById("content-box").innerHTML = "No results found. Please create a resource.";
+                return;
+            }
+            var table = document.createElement("table");
+            var tableBody = document.createElement("tbody");
+            table.appendChild(tableBody);
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            for (var key in arr[0]) {
+                var th = document.createElement("th");
+                th.innerHTML = key;
+                row.appendChild(th);
+            }
+            for (var i = 0; i < arr.length; i++) {
+                var row = tableBody.insertRow(i);
+                let j = 0;
+                for (const [key, value] of Object.entries(arr[i])) {
+                    var cell = row.insertCell(j);
+                    cell.innerHTML = value;
+                    j += 1;
+                }
+            }
+            var div = document.getElementById("content-box");
+            div.innerHTML = "";
+            div.appendChild(table);
+        }
+
+        document.getElementById("getAllItems").addEventListener("click", function () {
+            fetch("/v1/items")
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    console.log(data);
+                    displayTable(data.items);
+                });
+        });
+
+        document.getElementById("createItem").addEventListener("click", function () {
+            var name = document.getElementById("createItemName").value;
+            var description = document.getElementById("createItemDescription").value;
+            var quantity = document.getElementById("createItemQuantity").value;
+            var price = document.getElementById("createItemPrice").value;
+            var city = document.getElementById("createItemCity").value;
+            var item = {
+                name: name,
+                description: description,
+                quantity: parseInt(quantity),
+                price: parseFloat(price),
+                city: city
+            };
+            fetch("/v1/items", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(item)
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                })
+                .then(function (data) {
+                    displayTable([data.item]);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error.message;
+                });
+        });
+
+        document.getElementById("getItemByID").addEventListener("click", function () {
+            var id = document.getElementById("getItemIDInput").value;
+            fetch("/v1/items/" + id)
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again!');
+                })
+                .then(function (data) {
+                    displayTable([data.item]);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error.message;
+                });
+        });
+
+        document.getElementById("updateItem").addEventListener("click", function () {
+            var id = document.getElementById("updateItemID").value;
+            var name = document.getElementById("updateItemName").value;
+            var quantity = document.getElementById("updateItemQuantity").value;
+            var price = document.getElementById("updateItemPrice").value;
+            var item = {
+                name: name,
+                quantity: parseInt(quantity),
+                price: parseFloat(price)
+            };
+            fetch("/v1/items/" + id, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(item)
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again!');
+                })
+                .then(function (data) {
+                    displayTable([data.item]);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+        document.getElementById("deleteItem").addEventListener("click", function () {
+            var id = document.getElementById("deleteItemID").value;
+            fetch("/v1/items/" + id, {
+                method: "DELETE"
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                })
+                .then(function (data) {
+                    document.getElementById("content-box").innerHTML = "Item deleted successfully!";
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+        document.getElementById("getWarehouseByID").addEventListener("click", function () {
+            var id = document.getElementById("getWarehouseIDInput").value;
+            fetch("/v1/warehouses/" + id)
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again!');
+                })
+                .then(function (data) {
+                    displayTable([data.warehouse]);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+        document.getElementById("createWarehouse").addEventListener("click", function () {
+            var name = document.getElementById("createWarehouseName").value;
+            var description = document.getElementById("createWarehouseDescription").value;
+            var longitude = document.getElementById("createWarehouseLongitude").value;
+            var latitude = document.getElementById("createWarehouseLatitude").value;
+            var warehouse = {
+                name: name,
+                description: description,
+                longitude: parseFloat(longitude),
+                latitude: parseFloat(latitude)
+            };
+            fetch("/v1/warehouses", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(warehouse)
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                })
+                .then(function (data) {
+                    displayTable([data.warehouse]);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+        document.getElementById("addItemToWarehouse").addEventListener("click", function () {
+            var warehouseID = document.getElementById("addItemToWarehouseID").value;
+            var itemID = document.getElementById("addItemToWarehouseItemID").value;
+            fetch("/v1/warehouses/" + warehouseID + "/items", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ item_id: parseInt(itemID) })
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again!');
+                })
+                .then(function (data) {
+                    document.getElementById("content-box").innerHTML = "Item added to warehouse successfully!";
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+        document.getElementById("getAllWarehouses").addEventListener("click", function () {
+            fetch("/v1/warehouses")
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Something went wrong! Please try again!');
+                })
+                .then(function (data) {
+                    displayTable(data.warehouses);
+                })
+                .catch(function (error) {
+                    document.getElementById("content-box").innerHTML = error;
+                });
+        });
+
+
+    </script>
+</body>
+
+</html>

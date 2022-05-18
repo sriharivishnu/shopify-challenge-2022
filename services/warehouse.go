@@ -19,8 +19,8 @@ func (service *WarehouseService) CreateWarehouse(payload apiModels.CreateWarehou
 	warehouse := dbModels.Warehouse{
 		Name:        payload.Name,
 		Description: payload.Description,
-		Longitude:   payload.Lon,
-		Latitude:    payload.Lat,
+		Longitude:   payload.Longitude,
+		Latitude:    payload.Latitude,
 	}
 	if res := db.DbConn.Create(&warehouse); res.Error != nil {
 		return dbModels.Warehouse{}, res.Error

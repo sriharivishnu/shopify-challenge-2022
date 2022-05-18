@@ -28,14 +28,14 @@ func TestWarehouseCreate(t *testing.T) {
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
-		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "lon": 1.1321, "lat": 1.4567})
+		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "longitude": 1.1321, "latitude": 1.4567})
 
 		mockWarehouseService := mocks.WarehouseLayer{}
 		mockWarehouseService.On("CreateWarehouse", models.CreateWarehousePayload{
 			Name:        "warehouseName",
 			Description: "sample description",
-			Lon:         1.1321,
-			Lat:         1.4567,
+			Longitude:   1.1321,
+			Latitude:    1.4567,
 		}).Return(dummyWarehouse, nil)
 
 		warehouseController := WarehouseController{
@@ -45,7 +45,7 @@ func TestWarehouseCreate(t *testing.T) {
 		warehouseController.Create(ctx)
 
 		assert.Equal(t, 200, w.Code)
-		expected := `{"message":"Warehouse created successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}}`
+		expected := `{"message":"Warehouse created successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","longitude":1.1321,"latitude":1.4567}}`
 		assert.Equal(t, expected, w.Body.String())
 	})
 
@@ -53,14 +53,14 @@ func TestWarehouseCreate(t *testing.T) {
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
-		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "lon": 1.1321, "lat": 1.4567})
+		utils.MockJsonPost(ctx, gin.H{"name": "warehouseName", "description": "sample description", "longitude": 1.1321, "latitude": 1.4567})
 
 		mockWarehouseService := mocks.WarehouseLayer{}
 		mockWarehouseService.On("CreateWarehouse", models.CreateWarehousePayload{
 			Name:        "warehouseName",
 			Description: "sample description",
-			Lon:         1.1321,
-			Lat:         1.4567,
+			Longitude:   1.1321,
+			Latitude:    1.4567,
 		}).Return(dbModels.Warehouse{}, errors.New("error"))
 
 		warehouseController := WarehouseController{
@@ -107,7 +107,7 @@ func TestWarehouseGet(t *testing.T) {
 		warehouseController.Get(ctx)
 
 		assert.Equal(t, 200, w.Code)
-		expected := `{"message":"Warehouse fetched successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}}`
+		expected := `{"message":"Warehouse fetched successfully","warehouse":{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","longitude":1.1321,"latitude":1.4567}}`
 		assert.Equal(t, expected, w.Body.String())
 	})
 
@@ -157,7 +157,7 @@ func TestGetAllWarehouses(t *testing.T) {
 		warehouseController.GetAll(ctx)
 
 		assert.Equal(t, 200, w.Code)
-		expected := `{"message":"Warehouses fetched successfully","warehouses":[{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","lon":1.1321,"lat":1.4567,"items":null}]}`
+		expected := `{"message":"Warehouses fetched successfully","warehouses":[{"ID":0,"CreatedAt":"0001-01-01T00:00:00Z","UpdatedAt":"0001-01-01T00:00:00Z","DeletedAt":null,"name":"warehouseName","description":"sample description","longitude":1.1321,"latitude":1.4567}]}`
 		assert.Equal(t, expected, w.Body.String())
 	})
 

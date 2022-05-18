@@ -6,9 +6,9 @@ import (
 
 type Warehouse struct {
 	gorm.Model
-	Name        string  `json:"name" gorm:"not null"`
+	Name        string  `json:"name" gorm:"not null;unique"`
 	Description string  `json:"description" gorm:"column:description;not null;default:''"`
-	Longitude   float32 `json:"lon" gorm:"column:lon;not null;default:0"`
-	Latitude    float32 `json:"lat" gorm:"column:lat;not null;default:0"`
-	Items       []Item  `json:"items"`
+	Longitude   float32 `json:"longitude" gorm:"column:lon;not null;default:0"`
+	Latitude    float32 `json:"latitude" gorm:"column:lat;not null;default:0"`
+	Items       []Item  `json:"items,omitempty"`
 }

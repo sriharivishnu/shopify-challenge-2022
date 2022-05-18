@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -21,10 +22,11 @@ func NewRouter() *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+	router.LoadHTMLGlob("public/*.html")
 
 	// health checks
 	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from shopify Challenge API"})
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Status OK"})
