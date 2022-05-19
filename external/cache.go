@@ -8,9 +8,8 @@ type Cache interface {
 }
 
 type entry struct {
-	Value     interface{}
-	TTL       int64
-	CreatedAt int64
+	Value interface{}
+	TTL   int64
 }
 
 // Could implement external cache using redis, memcached, etc.
@@ -34,5 +33,5 @@ func (cache *InMemoryCache) Get(key string) interface{} {
 }
 
 func (cache *InMemoryCache) Set(key string, value interface{}, ttl int64) {
-	cache.InMemoryDs[key] = entry{Value: value, TTL: ttl, CreatedAt: time.Now().Unix()}
+	cache.InMemoryDs[key] = entry{Value: value, TTL: ttl + time.Now().Unix()}
 }
