@@ -34,14 +34,20 @@
     <h5>Item Actions</h5>
     <div style="margin-top: 5px;">
         <div style="margin-top: 5px">
-            <button id="getAllItems">Get All Items</button>
+            <button id="getAllItems">Get All Items</button> (Includes Weather Info for City)
         </div>
         <div style="margin-top: 5px">
             <button id="createItem">Create Item</button> <input id="createItemName" placeholder="Name" /> <input
                 placeholder="Description" id="createItemDescription" /> <input placeholder="Quantity" type="number"
                 id="createItemQuantity" />
-            <input placeholder="Price" type="number" id="createItemPrice" /> <input placeholder="City"
-                id="createItemCity" />
+            <input placeholder="Price" type="number" id="createItemPrice" />
+            <select id="createItemCity" name="City">
+                <option value="Toronto">Toronto</option>
+                <option value="Montreal">Montreal</option>
+                <option value="Vancouver">Vancouver</option>
+                <option value="Calgary">Calgary</option>
+                <option value="Waterloo">Waterloo</option>
+            </select>
         </div>
         <div style="margin-top: 5px">
             <button id="updateItem">Update Item</button> <input placeholder="ID" id="updateItemID" /> <input

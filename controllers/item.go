@@ -96,7 +96,7 @@ func (i *ItemController) GetItems(c *gin.Context) {
 	}
 	for idx := range items {
 		weather, err := i.WeatherService.FetchWeather(items[idx].City)
-		if err == nil {
+		if err == nil && len(weather.Weather) > 0 {
 			items[idx].WeatherDescription = weather.Weather[0].Description
 		} else {
 			items[idx].WeatherDescription = "No weather data available"
