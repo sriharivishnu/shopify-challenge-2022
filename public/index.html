@@ -29,15 +29,12 @@
 
 <body>
     <h1>Srihari Vishnu's 2022 Shopify Challenge</h1>
-    Let's track some inventory! ;)
+    Let's track some inventory! To get started, create an item!
     <h3>Actions</h3>
     <h5>Item Actions</h5>
     <div style="margin-top: 5px;">
         <div style="margin-top: 5px">
             <button id="getAllItems">Get All Items</button>
-        </div>
-        <div style="margin-top: 5px">
-            <button id="getItemByID">Get Item by ID</button> <input id="getItemIDInput" placeholder="ID" />
         </div>
         <div style="margin-top: 5px">
             <button id="createItem">Create Item</button> <input id="createItemName" placeholder="Name" /> <input
@@ -102,7 +99,7 @@
                 let j = 0;
                 for (const [key, value] of Object.entries(arr[i])) {
                     var cell = row.insertCell(j);
-                    cell.innerHTML = value;
+                    cell.innerHTML = JSON.stringify(value);
                     j += 1;
                 }
             }
@@ -111,14 +108,22 @@
             div.appendChild(table);
         }
 
+        function handleError(response) {
+            if (response.error) {
+                throw new Error(response.error);
+            } else {
+                throw new Error("Something went wrong! Please try again.");
+            }
+        }
+
         document.getElementById("getAllItems").addEventListener("click", function () {
             fetch("/v1/items")
                 .then(function (response) {
                     return response.json();
                 })
                 .then(function (data) {
-                    console.log(data);
-                    displayTable(data.items);
+                    if (data.error) handleError(data);
+                    else displayTable(data.items);
                 });
         });
 
@@ -143,30 +148,11 @@
                 body: JSON.stringify(item)
             })
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                    return response.json();
                 })
                 .then(function (data) {
-                    displayTable([data.item]);
-                })
-                .catch(function (error) {
-                    document.getElementById("content-box").innerHTML = error.message;
-                });
-        });
-
-        document.getElementById("getItemByID").addEventListener("click", function () {
-            var id = document.getElementById("getItemIDInput").value;
-            fetch("/v1/items/" + id)
-                .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again!');
-                })
-                .then(function (data) {
-                    displayTable([data.item]);
+                    if (data.error) handleError(data);
+                    else displayTable([data.item]);
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error.message;
@@ -191,13 +177,11 @@
                 body: JSON.stringify(item)
             })
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again!');
+                    return response.json();
                 })
                 .then(function (data) {
-                    displayTable([data.item]);
+                    if (data.error) handleError(data);
+                    else displayTable([data.item]);
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;
@@ -210,13 +194,11 @@
                 method: "DELETE"
             })
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                    return response.json();
                 })
                 .then(function (data) {
-                    document.getElementById("content-box").innerHTML = "Item deleted successfully!";
+                    if (data.error) handleError(data);
+                    else document.getElementById("content-box").innerHTML = "Item deleted successfully!";
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;
@@ -227,13 +209,11 @@
             var id = document.getElementById("getWarehouseIDInput").value;
             fetch("/v1/warehouses/" + id)
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again!');
+                    return response.json();
                 })
                 .then(function (data) {
-                    displayTable([data.warehouse]);
+                    if (data.error) handleError(data);
+                    else displayTable([data.warehouse]);
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;
@@ -259,13 +239,11 @@
                 body: JSON.stringify(warehouse)
             })
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again! ' + response.error);
+                    return response.json();
                 })
                 .then(function (data) {
-                    displayTable([data.warehouse]);
+                    if (data.error) handleError(data);
+                    else displayTable([data.warehouse]);
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;
@@ -283,13 +261,11 @@
                 body: JSON.stringify({ item_id: parseInt(itemID) })
             })
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again!');
+                    return response.json();
                 })
                 .then(function (data) {
-                    document.getElementById("content-box").innerHTML = "Item added to warehouse successfully!";
+                    if (data.error) handleError(data);
+                    else document.getElementById("content-box").innerHTML = "Item added to warehouse successfully!";
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;
@@ -299,13 +275,11 @@
         document.getElementById("getAllWarehouses").addEventListener("click", function () {
             fetch("/v1/warehouses")
                 .then(function (response) {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Something went wrong! Please try again!');
+                    return response.json();
                 })
                 .then(function (data) {
-                    displayTable(data.warehouses);
+                    if (data.error) handleError(data);
+                    else displayTable(data.warehouses);
                 })
                 .catch(function (error) {
                     document.getElementById("content-box").innerHTML = error;

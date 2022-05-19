@@ -26,6 +26,11 @@ func (i *ItemController) CreateItem(c *gin.Context) {
 		return
 	}
 
+	if err := createItemPayload.Validate(); err != nil {
+		utils.RespondError(c, err, http.StatusBadRequest)
+		return
+	}
+
 	item, err := i.ItemService.CreateItem(createItemPayload)
 
 	if err != nil {

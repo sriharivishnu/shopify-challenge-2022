@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/sriharivishnu/shopify-challenge/config"
 	"github.com/sriharivishnu/shopify-challenge/external"
 	models "github.com/sriharivishnu/shopify-challenge/models/api"
 )
@@ -44,7 +45,7 @@ func (service *WeatherService) FetchWeather(city string) (models.WeatherResponse
 	if weather := service.Cache.Get(city); weather != nil {
 		return weather.(models.WeatherResponse), nil
 	}
-	appId := "dfc4083c5474f48352a4dfc1b72c771f"
+	appId := config.Config.WEATHER_API_KEY
 
 	lon, lat := service.GetLonLat(city)
 

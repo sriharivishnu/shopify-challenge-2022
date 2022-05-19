@@ -13,6 +13,7 @@ type configType struct {
 	DATABASE_PORT     string
 	DATABASE_USER     string
 	DATABASE_PASSWORD string
+	WEATHER_API_KEY   string
 }
 
 var Config *configType = &configType{}

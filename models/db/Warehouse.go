@@ -12,3 +12,7 @@ type Warehouse struct {
 	Latitude    float32 `json:"latitude" gorm:"column:lat;not null;default:0"`
 	Items       []Item  `json:"items,omitempty"`
 }
+
+func (w Warehouse) Validate() bool {
+	return w.Name != "" && w.Longitude != 0 && w.Latitude != 0
+}

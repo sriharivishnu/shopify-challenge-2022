@@ -71,7 +71,7 @@ func (service *ItemService) GetItems() ([]dbModels.Item, error) {
 }
 
 func (service *ItemService) DeleteItem(itemId uint) error {
-	res := db.DbConn.Delete(&dbModels.Item{}, itemId)
+	res := db.DbConn.Unscoped().Delete(&dbModels.Item{}, itemId)
 	if res.Error != nil {
 		return res.Error
 	}
